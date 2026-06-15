@@ -1,5 +1,5 @@
 // ============================================================
-// FixFlow — Contractor Dashboard
+// easyhomefix — Contractor Dashboard
 // Job list, evidence upload, and completion workflow
 // ============================================================
 

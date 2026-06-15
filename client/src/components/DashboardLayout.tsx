@@ -1,5 +1,5 @@
 // ============================================================
-// FixFlow — Dashboard Layout
+// easyhomefix — Dashboard Layout
 // Persistent sidebar + top header for all dashboard views
 // ============================================================
 
@@ -100,13 +100,13 @@ export default function DashboardLayout({ children, title, breadcrumbs, actions 
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 py-5 border-b border-sidebar-border">
         <img
-          src="https://d2xsxph8kpxj0f.cloudfront.net/310519663762951485/7uj5hnYJRRXorRVXrZfLxM/fixflow-logo-EkNeMYvSJJ5YP4ELsBoxBN.webp"
-          alt="FixFlow"
+          src="https://d2xsxph8kpxj0f.cloudfront.net/310519663762951485/7uj5hnYJRRXorRVXrZfLxM/easyhomefix-logo-EkNeMYvSJJ5YP4ELsBoxBN.webp"
+          alt="easyhomefix"
           className="w-8 h-8"
         />
         <div>
           <span className="text-lg font-bold text-sidebar-foreground tracking-tight" style={{ fontFamily: 'DM Sans, sans-serif' }}>
-            FixFlow
+            easyhomefix
           </span>
           <p className="text-xs text-sidebar-foreground/50 -mt-0.5">Maintenance Platform</p>
         </div>

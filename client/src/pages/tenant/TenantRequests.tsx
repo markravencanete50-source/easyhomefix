@@ -1,5 +1,5 @@
 // ============================================================
-// FixFlow — Tenant Requests List
+// easyhomefix — Tenant Requests List
 // ============================================================
 
 import { useState } from 'react';

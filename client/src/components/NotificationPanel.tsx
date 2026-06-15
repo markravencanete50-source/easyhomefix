@@ -1,5 +1,5 @@
 // ============================================================
-// FixFlow — Notification Panel
+// easyhomefix — Notification Panel
 // Real-time notification center with unread counter
 // ============================================================
 

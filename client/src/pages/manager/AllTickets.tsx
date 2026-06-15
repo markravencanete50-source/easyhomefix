@@ -1,5 +1,5 @@
 // ============================================================
-// FixFlow — All Tickets Management
+// easyhomefix — All Tickets Management
 // Full ticket list with filters, search, and assignment
 // ============================================================
 

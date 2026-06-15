@@ -1,5 +1,5 @@
 // ============================================================
-// FixFlow — Property Maintenance Management Platform
+// easyhomefix — Property Maintenance Management Platform
 // TypeScript Interfaces & Type Definitions
 // ============================================================
 

@@ -1,5 +1,5 @@
 // ============================================================
-// FixFlow — Firestore Database Service
+// easyhomefix — Firestore Database Service
 // Complete schema and CRUD operations for all collections
 // ============================================================
 

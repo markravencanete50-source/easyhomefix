@@ -1,5 +1,5 @@
 // ============================================================
-// FixFlow — Contractor Management
+// easyhomefix — Contractor Management
 // ============================================================
 
 import { useState } from 'react';

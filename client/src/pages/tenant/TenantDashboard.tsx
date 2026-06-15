@@ -1,5 +1,5 @@
 // ============================================================
-// FixFlow — Tenant Dashboard
+// easyhomefix — Tenant Dashboard
 // Simple, lightweight view for tenants
 // ============================================================
 

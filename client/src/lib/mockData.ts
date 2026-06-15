@@ -1,5 +1,5 @@
 // ============================================================
-// FixFlow — Mock Data for Demo/Development Mode
+// easyhomefix — Mock Data for Demo/Development Mode
 // Used when Firebase is not yet configured
 // ============================================================
 

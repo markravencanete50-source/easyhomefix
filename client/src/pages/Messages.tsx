@@ -1,5 +1,5 @@
 // ============================================================
-// FixFlow — Communication Center
+// easyhomefix — Communication Center
 // Ticket-based messaging between tenants, managers, contractors
 // ============================================================
 

@@ -108,8 +108,8 @@ export default function Login() {
       <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-12 text-white">
         <div className="flex items-center gap-3">
           <img
-            src="https://d2xsxph8kpxj0f.cloudfront.net/310519663762951485/7uj5hnYJRRXorRVXrZfLxM/fixflow-logo-EkNeMYvSJJ5YP4ELsBoxBN.webp"
-            alt="FixFlow"
+            src="https://d2xsxph8kpxj0f.cloudfront.net/310519663762951485/7uj5hnYJRRXorRVXrZfLxM/easyhomefix-logo-EkNeMYvSJJ5YP4ELsBoxBN.webp"
+            alt="easyhomefix"
             className="w-10 h-10"
           />
           <span className="text-2xl font-bold tracking-tight" style={{ fontFamily: 'DM Sans, sans-serif' }}>
@@ -158,8 +158,8 @@ export default function Login() {
           {/* Mobile logo */}
           <div className="flex items-center gap-2 lg:hidden">
             <img
-              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663762951485/7uj5hnYJRRXorRVXrZfLxM/fixflow-logo-EkNeMYvSJJ5YP4ELsBoxBN.webp"
-              alt="FixFlow"
+              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663762951485/7uj5hnYJRRXorRVXrZfLxM/easyhomefix-logo-EkNeMYvSJJ5YP4ELsBoxBN.webp"
+              alt="easyhomefix"
               className="w-8 h-8"
             />
             <span className="text-xl font-bold" style={{ fontFamily: 'DM Sans, sans-serif' }}>House of Lettings Fix</span>

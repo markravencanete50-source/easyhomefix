@@ -1,5 +1,5 @@
 // ============================================================
-// FixFlow — Admin Dashboard
+// easyhomefix — Admin Dashboard
 // Full system overview, user management, audit logs
 // ============================================================
 

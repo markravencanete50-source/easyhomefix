@@ -63,7 +63,7 @@ Every action has immediate visual feedback. Status changes animate smoothly. For
 - Hierarchy: 32px display → 24px h1 → 20px h2 → 16px h3 → 14px body → 12px caption
 
 ### Brand Essence
-**"FixFlow — The maintenance workflow platform built for property teams who move fast."**
+**"easyhomefix — The maintenance workflow platform built for property teams who move fast."**
 Personality: **Reliable. Decisive. Clear.**
 
 ### Brand Voice

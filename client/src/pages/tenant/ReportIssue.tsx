@@ -1,5 +1,5 @@
 // ============================================================
-// FixFlow — Report Maintenance Issue
+// easyhomefix — Report Maintenance Issue
 // 6-step wizard for tenants to submit maintenance requests
 // ============================================================
 

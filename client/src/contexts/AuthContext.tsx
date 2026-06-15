@@ -1,5 +1,5 @@
 // ============================================================
-// FixFlow — Authentication Context
+// easyhomefix — Authentication Context
 // Firebase Auth with role-based access control
 // ============================================================
 
@@ -105,7 +105,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     if (isDemoMode) {
       // Check localStorage for demo session
-      const savedRole = localStorage.getItem('fixflow_demo_role') as UserRole | null;
+      const savedRole = localStorage.getItem('easyhomefix_demo_role') as UserRole | null;
       if (savedRole && DEMO_USERS[savedRole]) {
         setCurrentUser(DEMO_USERS[savedRole]);
       }
@@ -131,7 +131,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Demo login by email
       const demoUser = Object.values(DEMO_USERS).find(u => u.email === email);
       if (demoUser) {
-        localStorage.setItem('fixflow_demo_role', demoUser.role);
+        localStorage.setItem('easyhomefix_demo_role', demoUser.role);
         setCurrentUser(demoUser);
         return;
       }
@@ -165,7 +165,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async (): Promise<void> => {
     if (isDemoMode) {
-      localStorage.removeItem('fixflow_demo_role');
+      localStorage.removeItem('easyhomefix_demo_role');
       setCurrentUser(null);
       return;
     }
@@ -180,7 +180,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const demoLogin = (role: UserRole): void => {
-    localStorage.setItem('fixflow_demo_role', role);
+    localStorage.setItem('easyhomefix_demo_role', role);
     setCurrentUser(DEMO_USERS[role]);
   };
 

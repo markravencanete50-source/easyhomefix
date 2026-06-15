@@ -1,5 +1,5 @@
 // ============================================================
-// FixFlow — Firebase Configuration
+// easyhomefix — Firebase Configuration
 // Firebase is the storage/backend; GitHub + Vercel for hosting
 // ============================================================
 

@@ -1,5 +1,5 @@
 // ============================================================
-// FixFlow — Firebase Storage Service
+// easyhomefix — Firebase Storage Service
 // Handles all file uploads: images, videos, audio, documents
 // ============================================================
 

@@ -1,5 +1,5 @@
 // ============================================================
-// FixFlow — Property Manager Dashboard
+// easyhomefix — Property Manager Dashboard
 // Core system with analytics, metrics, and ticket overview
 // ============================================================
 

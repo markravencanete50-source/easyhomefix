@@ -33,9 +33,17 @@ import {
   Info,
   Send,
 } from 'lucide-react';
-// Removed MOCK_PROPERTIES - now using manual property entry
-import { CATEGORY_LABELS, CATEGORY_ICONS, generateTicketNumber, formatFileSize } from '@/lib/utils';
-import type { MaintenanceCategory, Priority } from '@/types';
+import { useAuth } from '@/contexts/AuthContext';
+import { createTicket } from '@/lib/firestore';
+import { uploadTicketAttachment } from '@/lib/storage';
+import { CATEGORY_LABELS, CATEGORY_ICONS, formatFileSize } from '@/lib/utils';
+import type { MaintenanceCategory, Priority, MaintenanceTicket } from '@/types';
+
+const makeTicketNumber = () => {
+  const year = new Date().getFullYear();
+  const rand = Math.floor(Math.random() * 900000) + 100000;
+  return `MT-${year}-${rand}`;
+};
 
 const STEPS = [
   { id: 1, label: 'Property', icon: Building2 },
@@ -72,6 +80,7 @@ interface FormData {
 
 export default function ReportIssue() {
   const [, navigate] = useLocation();
+  const { user, isDemoMode } = useAuth();
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -97,7 +106,7 @@ export default function ReportIssue() {
       case 1: return form.postcode.length >= 3 && form.addressLine1.length >= 5;
       case 2: return !!form.category;
       case 3: return form.title.length >= 5 && form.description.length >= 10;
-      case 4: return true; // Files optional
+      case 4: return true;
       case 5: return !!form.issueDuration && !!form.contractorAccess && !!form.priority;
       case 6: return true;
       default: return false;
@@ -120,16 +129,68 @@ export default function ReportIssue() {
 
   const handleSubmit = async () => {
     setSubmitting(true);
-    // Simulate API call (in production: create Firestore document + upload files)
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    const num = generateTicketNumber();
-    setTicketNumber(num);
-    setSubmitted(true);
-    setSubmitting(false);
-    toast.success(`Ticket ${num} submitted successfully!`);
-  };
+    try {
+      if (isDemoMode) {
+        await new Promise(resolve => setTimeout(resolve, 1200));
+        const num = makeTicketNumber();
+        setTicketNumber(num);
+        setSubmitted(true);
+        toast.success(`Ticket ${num} submitted! (Demo mode — not saved to database)`);
+      } else {
+        const uploadedUrls: string[] = [];
+        const tempTicketId = `temp-${Date.now()}`;
+        if (form.files.length > 0 && user) {
+          for (const file of form.files) {
+            try {
+              const result = await uploadTicketAttachment(tempTicketId, file, 'evidence');
+              uploadedUrls.push(result.url);
+            } catch {
+              toast.warning(`Could not upload ${file.name}, skipping.`);
+            }
+          }
+        }
 
-  // Property info is now entered manually
+        const ticketNum = makeTicketNumber();
+        await createTicket({
+          ticketNumber: ticketNum,
+          tenantId: user?.uid ?? '',
+          tenantName: user?.displayName ?? '',
+          propertyId: '',
+          propertyName: `${form.addressLine1}, ${form.postcode}`,
+          category: form.category as MaintenanceCategory,
+          title: form.title,
+          description: form.description,
+          priority: form.priority as Priority,
+          status: 'open',
+          attachments: uploadedUrls.map((url, i) => ({
+            id: `att-${i}`,
+            ticketId: tempTicketId,
+            uploadedBy: user?.uid ?? '',
+            fileName: form.files[i]?.name ?? `file-${i}`,
+            fileType: form.files[i]?.type ?? 'application/octet-stream',
+            fileSize: form.files[i]?.size ?? 0,
+            url,
+            uploadedAt: new Date().toISOString(),
+          })),
+          issueDuration: form.issueDuration as MaintenanceTicket['issueDuration'],
+          contractorAccess: form.contractorAccess as MaintenanceTicket['contractorAccess'],
+          isEmergency: form.priority === 'emergency',
+          isEscalated: false,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
+
+        setTicketNumber(ticketNum);
+        setSubmitted(true);
+        toast.success(`Ticket ${ticketNum} submitted successfully!`);
+      }
+    } catch (err) {
+      console.error('Submit error:', err);
+      toast.error('Failed to submit request. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   if (submitted) {
     return (
@@ -171,7 +232,6 @@ export default function ReportIssue() {
       breadcrumbs={[{ label: 'Dashboard', href: '/' }, { label: 'Report Issue' }]}
     >
       <div className="p-4 lg:p-6 max-w-2xl">
-        {/* Step indicator */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-3">
             {STEPS.map((s, i) => {
@@ -210,7 +270,6 @@ export default function ReportIssue() {
         <Card className="border-0 shadow-sm">
           <CardContent className="p-5 space-y-5">
 
-            {/* Step 1: Enter Property Details */}
             {step === 1 && (
               <div className="space-y-4">
                 <div>
@@ -249,7 +308,6 @@ export default function ReportIssue() {
               </div>
             )}
 
-            {/* Step 2: Category */}
             {step === 2 && (
               <div className="space-y-4">
                 <div>
@@ -279,7 +337,6 @@ export default function ReportIssue() {
               </div>
             )}
 
-            {/* Step 3: Describe */}
             {step === 3 && (
               <div className="space-y-4">
                 <div>
@@ -326,7 +383,6 @@ export default function ReportIssue() {
               </div>
             )}
 
-            {/* Step 4: Upload Evidence */}
             {step === 4 && (
               <div className="space-y-4">
                 <div>
@@ -337,7 +393,6 @@ export default function ReportIssue() {
                     Photos and videos help us understand the issue faster. (Optional)
                   </p>
                 </div>
-
                 <div
                   className="border-2 border-dashed border-border rounded-xl p-8 text-center cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-all duration-150"
                   onClick={() => fileInputRef.current?.click()}
@@ -354,7 +409,6 @@ export default function ReportIssue() {
                     onChange={handleFileAdd}
                   />
                 </div>
-
                 {form.files.length > 0 && (
                   <div className="space-y-2">
                     <p className="text-xs font-medium text-muted-foreground">{form.files.length} file(s) selected</p>
@@ -369,10 +423,7 @@ export default function ReportIssue() {
                           <p className="text-xs font-medium text-foreground truncate">{file.name}</p>
                           <p className="text-xs text-muted-foreground">{formatFileSize(file.size)}</p>
                         </div>
-                        <button
-                          onClick={() => removeFile(i)}
-                          className="text-muted-foreground hover:text-destructive transition-colors"
-                        >
+                        <button onClick={() => removeFile(i)} className="text-muted-foreground hover:text-destructive transition-colors">
                           <X className="w-4 h-4" />
                         </button>
                       </div>
@@ -382,7 +433,6 @@ export default function ReportIssue() {
               </div>
             )}
 
-            {/* Step 5: Additional Info */}
             {step === 5 && (
               <div className="space-y-5">
                 <div>
@@ -391,8 +441,6 @@ export default function ReportIssue() {
                   </h3>
                   <p className="text-sm text-muted-foreground mt-0.5">Help us prioritize and schedule your request.</p>
                 </div>
-
-                {/* Issue duration */}
                 <div className="space-y-2">
                   <Label className="text-sm font-semibold">How long has this issue existed?</Label>
                   <div className="grid grid-cols-2 gap-2">
@@ -416,8 +464,6 @@ export default function ReportIssue() {
                     ))}
                   </div>
                 </div>
-
-                {/* Contractor access */}
                 <div className="space-y-2">
                   <Label className="text-sm font-semibold">Can a contractor access the property?</Label>
                   <div className="grid grid-cols-3 gap-2">
@@ -440,8 +486,6 @@ export default function ReportIssue() {
                     ))}
                   </div>
                 </div>
-
-                {/* Priority */}
                 <div className="space-y-2">
                   <Label className="text-sm font-semibold">Priority Level</Label>
                   <div className="space-y-2">
@@ -466,7 +510,6 @@ export default function ReportIssue() {
               </div>
             )}
 
-            {/* Step 6: Review */}
             {step === 6 && (
               <div className="space-y-4">
                 <div>
@@ -475,7 +518,6 @@ export default function ReportIssue() {
                   </h3>
                   <p className="text-sm text-muted-foreground mt-0.5">Confirm the details before submitting.</p>
                 </div>
-
                 <div className="space-y-3">
                   {[
                     { label: 'Postcode', value: form.postcode },
@@ -493,12 +535,10 @@ export default function ReportIssue() {
                     </div>
                   ))}
                 </div>
-
                 <div className="p-3 rounded-lg bg-muted/40 border border-border">
                   <p className="text-xs font-medium text-foreground mb-1">Description</p>
                   <p className="text-sm text-muted-foreground">{form.description}</p>
                 </div>
-
                 {form.priority === 'emergency' && (
                   <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 border border-red-200">
                     <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
@@ -513,7 +553,6 @@ export default function ReportIssue() {
           </CardContent>
         </Card>
 
-        {/* Navigation buttons */}
         <div className="flex items-center justify-between mt-4">
           <Button
             variant="outline"

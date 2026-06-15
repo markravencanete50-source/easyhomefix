@@ -1,5 +1,5 @@
 // ============================================================
-// House of Lettings Fix — Login Page
+// easyhomefix — Login Page
 // Firebase Auth + Demo mode support
 // ============================================================
 
@@ -113,7 +113,7 @@ export default function Login() {
             className="w-10 h-10"
           />
           <span className="text-2xl font-bold tracking-tight" style={{ fontFamily: 'DM Sans, sans-serif' }}>
-            House of Lettings Fix
+            easyhomefix
           </span>
         </div>
 
@@ -149,7 +149,7 @@ export default function Login() {
           </div>
         </div>
 
-        <p className="text-sm text-white/40">© 2024 House of Lettings Fix. Property Maintenance Management Platform.</p>
+        <p className="text-sm text-white/40">© 2024 easyhomefix. Property Maintenance Management Platform.</p>
       </div>
 
       {/* Right panel — login form */}
@@ -162,7 +162,7 @@ export default function Login() {
               alt="easyhomefix"
               className="w-8 h-8"
             />
-            <span className="text-xl font-bold" style={{ fontFamily: 'DM Sans, sans-serif' }}>House of Lettings Fix</span>
+            <span className="text-xl font-bold" style={{ fontFamily: 'DM Sans, sans-serif' }}>easyhomefix</span>
           </div>
 
           <div>

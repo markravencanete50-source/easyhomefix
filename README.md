@@ -1,4 +1,4 @@
-# House of Lettings Fix — Property Maintenance Management Platform
+# easyhomefix — Property Maintenance Management Platform
 
 > *Every issue. Tracked. Resolved.*
 

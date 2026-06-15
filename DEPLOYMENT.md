@@ -1,4 +1,4 @@
-# House of Lettings Deployment
+# easyhomefix Deployment
 
 This project is set up for:
 

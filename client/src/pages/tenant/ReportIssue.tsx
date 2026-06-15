@@ -33,7 +33,7 @@ import {
   Info,
   Send,
 } from 'lucide-react';
-import { MOCK_PROPERTIES } from '@/lib/mockData';
+// Removed MOCK_PROPERTIES - now using manual property entry
 import { CATEGORY_LABELS, CATEGORY_ICONS, generateTicketNumber, formatFileSize } from '@/lib/utils';
 import type { MaintenanceCategory, Priority } from '@/types';
 
@@ -59,7 +59,8 @@ const PRIORITIES: Array<{ value: Priority; label: string; desc: string; color: s
 ];
 
 interface FormData {
-  propertyId: string;
+  postcode: string;
+  addressLine1: string;
   category: MaintenanceCategory | '';
   title: string;
   description: string;
@@ -78,7 +79,8 @@ export default function ReportIssue() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState<FormData>({
-    propertyId: MOCK_PROPERTIES[0].id,
+    postcode: '',
+    addressLine1: '',
     category: '',
     title: '',
     description: '',
@@ -92,7 +94,7 @@ export default function ReportIssue() {
 
   const canProceed = (): boolean => {
     switch (step) {
-      case 1: return !!form.propertyId;
+      case 1: return form.postcode.length >= 3 && form.addressLine1.length >= 5;
       case 2: return !!form.category;
       case 3: return form.title.length >= 5 && form.description.length >= 10;
       case 4: return true; // Files optional
@@ -127,7 +129,7 @@ export default function ReportIssue() {
     toast.success(`Ticket ${num} submitted successfully!`);
   };
 
-  const selectedProperty = MOCK_PROPERTIES.find(p => p.id === form.propertyId);
+  // Property info is now entered manually
 
   if (submitted) {
     return (
@@ -153,7 +155,7 @@ export default function ReportIssue() {
               <Button onClick={() => navigate('/tenant/requests')} className="w-full">
                 View My Requests
               </Button>
-              <Button variant="outline" onClick={() => { setSubmitted(false); setStep(1); setForm({ propertyId: MOCK_PROPERTIES[0].id, category: '', title: '', description: '', files: [], issueDuration: '', contractorAccess: '', priority: '' }); }}>
+              <Button variant="outline" onClick={() => { setSubmitted(false); setStep(1); setForm({ postcode: '', addressLine1: '', category: '', title: '', description: '', files: [], issueDuration: '', contractorAccess: '', priority: '' }); }}>
                 Submit Another Request
               </Button>
             </div>
@@ -208,41 +210,41 @@ export default function ReportIssue() {
         <Card className="border-0 shadow-sm">
           <CardContent className="p-5 space-y-5">
 
-            {/* Step 1: Select Property */}
+            {/* Step 1: Enter Property Details */}
             {step === 1 && (
               <div className="space-y-4">
                 <div>
                   <h3 className="text-lg font-bold text-foreground" style={{ fontFamily: 'DM Sans, sans-serif' }}>
-                    Select Property
+                    Property Details
                   </h3>
-                  <p className="text-sm text-muted-foreground mt-0.5">Which property is this issue at?</p>
+                  <p className="text-sm text-muted-foreground mt-0.5">Enter your property postcode and address</p>
                 </div>
-                <div className="space-y-2">
-                  {MOCK_PROPERTIES.map(property => (
-                    <button
-                      key={property.id}
-                      onClick={() => setForm(prev => ({ ...prev, propertyId: property.id }))}
-                      className={`w-full flex items-start gap-3 p-4 rounded-lg border-2 text-left transition-all duration-150 ${
-                        form.propertyId === property.id
-                          ? 'border-primary bg-primary/5'
-                          : 'border-border hover:border-primary/50 hover:bg-muted/30'
-                      }`}
-                    >
-                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
-                        form.propertyId === property.id ? 'bg-primary text-primary-foreground' : 'bg-muted'
-                      }`}>
-                        <Building2 className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <p className="font-semibold text-foreground">{property.name}</p>
-                        <p className="text-sm text-muted-foreground">{property.address}, {property.city}, {property.state}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">{property.totalUnits} units</p>
-                      </div>
-                      {form.propertyId === property.id && (
-                        <CheckCircle className="w-5 h-5 text-primary ml-auto shrink-0 mt-0.5" />
-                      )}
-                    </button>
-                  ))}
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="postcode" className="text-sm font-medium">Postcode *</Label>
+                    <Input
+                      id="postcode"
+                      placeholder="e.g., SW1A 1AA"
+                      value={form.postcode}
+                      onChange={e => setForm(prev => ({ ...prev, postcode: e.target.value }))}
+                      className="h-10 mt-1.5"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="addressLine1" className="text-sm font-medium">First Line of Address *</Label>
+                    <Input
+                      id="addressLine1"
+                      placeholder="e.g., 123 Main Street"
+                      value={form.addressLine1}
+                      onChange={e => setForm(prev => ({ ...prev, addressLine1: e.target.value }))}
+                      className="h-10 mt-1.5"
+                    />
+                  </div>
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <p className="text-xs text-blue-700">
+                      <span className="font-semibold">ℹ️ Info:</span> We'll use this information to identify your property and route your request to the appropriate manager.
+                    </p>
+                  </div>
                 </div>
               </div>
             )}
@@ -476,7 +478,8 @@ export default function ReportIssue() {
 
                 <div className="space-y-3">
                   {[
-                    { label: 'Property', value: selectedProperty?.name },
+                    { label: 'Postcode', value: form.postcode },
+                    { label: 'Address', value: form.addressLine1 },
                     { label: 'Category', value: form.category ? CATEGORY_LABELS[form.category] : '' },
                     { label: 'Title', value: form.title },
                     { label: 'Priority', value: form.priority ? form.priority.charAt(0).toUpperCase() + form.priority.slice(1) : '' },

@@ -1,7 +1,7 @@
-import { useAuth } from "@/_core/hooks/useAuth";
 import { cn } from "@/lib/utils";
-import { trpc } from "@/lib/trpc";
-import { getLoginUrl } from "@/const";
+import { useAuth as useFirebaseAuth } from "@/contexts/AuthContext";
+import { useLocation } from "wouter";
+import { Link } from "wouter";
 import {
   AlertCircle,
   Bell,
@@ -20,7 +20,6 @@ import {
   X,
 } from "lucide-react";
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "wouter";
 import type { UserRole } from "../../../shared/types";
 
 interface NavItem {
@@ -46,15 +45,11 @@ interface AppLayoutProps {
 }
 
 export default function AppLayout({ children }: AppLayoutProps) {
-  const { user, loading, isAuthenticated, logout } = useAuth();
+  const { currentUser, loading, logout } = useFirebaseAuth();
   const [location] = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
-
-  const { data: unreadCount = 0 } = trpc.notifications.unreadCount.useQuery(undefined, {
-    enabled: isAuthenticated,
-    refetchInterval: 30000,
-  });
+  const unreadCount = 0; // Placeholder for notifications
 
   useEffect(() => { setSidebarOpen(false); }, [location]);
 
@@ -69,45 +64,47 @@ export default function AppLayout({ children }: AppLayoutProps) {
     );
   }
 
-  if (!isAuthenticated) {
+  if (!currentUser) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="max-w-md w-full text-center space-y-6">
-          <div className="flex justify-center">
-            <div className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center shadow-lg">
-              <Wrench size={32} className="text-white" />
-            </div>
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">House of Lettings Fix</h1>
-            <p className="mt-2 text-muted-foreground">The maintenance workflow platform built for property teams who move fast.</p>
-          </div>
-          <div className="grid grid-cols-2 gap-3 text-sm text-muted-foreground">
-            {[
-              { icon: <ClipboardList size={16} />, text: "Real-time tracking" },
-              { icon: <AlertCircle size={16} />, text: "Emergency alerts" },
-              { icon: <Building2 size={16} />, text: "Multi-property" },
-              { icon: <Users size={16} />, text: "Contractor portal" },
-            ].map(({ icon, text }) => (
-              <div key={text} className="flex items-center gap-2 bg-muted rounded-lg p-3">
-                <span className="text-primary">{icon}</span>
-                <span>{text}</span>
+      <Link href="/login">
+        <div className="min-h-screen bg-background flex items-center justify-center p-4">
+          <div className="max-w-md w-full text-center space-y-6">
+            <div className="flex justify-center">
+              <div className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center shadow-lg">
+                <Wrench size={32} className="text-white" />
               </div>
-            ))}
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">House of Lettings Fix</h1>
+              <p className="mt-2 text-muted-foreground">The maintenance workflow platform built for property teams who move fast.</p>
+            </div>
+            <div className="grid grid-cols-2 gap-3 text-sm text-muted-foreground">
+              {[
+                { icon: <ClipboardList size={16} />, text: "Real-time tracking" },
+                { icon: <AlertCircle size={16} />, text: "Emergency alerts" },
+                { icon: <Building2 size={16} />, text: "Multi-property" },
+                { icon: <Users size={16} />, text: "Contractor portal" },
+              ].map(({ icon, text }) => (
+                <div key={text} className="flex items-center gap-2 bg-muted rounded-lg p-3">
+                  <span className="text-primary">{icon}</span>
+                  <span>{text}</span>
+                </div>
+              ))}
+            </div>
+            <button
+              className="flex items-center justify-center gap-2 w-full py-3 px-6 bg-primary text-primary-foreground rounded-xl font-semibold text-base hover:bg-primary/90 transition-colors shadow-md"
+              onClick={() => window.location.href = '/login'}
+            >
+              Sign in to your account
+            </button>
+            <p className="text-xs text-muted-foreground">Every issue. Tracked. Resolved.</p>
           </div>
-          <a
-            href={getLoginUrl()}
-            className="flex items-center justify-center gap-2 w-full py-3 px-6 bg-primary text-primary-foreground rounded-xl font-semibold text-base hover:bg-primary/90 transition-colors shadow-md"
-          >
-            Sign in to your account
-          </a>
-          <p className="text-xs text-muted-foreground">Every issue. Tracked. Resolved.</p>
         </div>
-      </div>
+      </Link>
     );
   }
 
-  const role = (user?.role as UserRole) || "tenant";
+  const role = (currentUser?.role as UserRole) || "tenant";
   const visibleNav = NAV_ITEMS.filter(item => item.roles.includes(role));
 
   const roleLabel: Record<UserRole, string> = {
@@ -212,15 +209,18 @@ export default function AppLayout({ children }: AppLayoutProps) {
           <div className="px-3 py-2 mt-1">
             <div className="flex items-center gap-2 mb-2">
               <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center text-primary text-xs font-bold flex-shrink-0">
-                {user?.name?.charAt(0)?.toUpperCase() || "U"}
+                {currentUser?.displayName?.charAt(0)?.toUpperCase() || "U"}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-semibold text-sidebar-foreground truncate">{user?.name || "User"}</p>
-                <p className="text-[10px] text-sidebar-foreground/50 truncate">{user?.email || ""}</p>
+                <p className="text-xs font-semibold text-sidebar-foreground truncate">{currentUser?.displayName || "User"}</p>
+                <p className="text-[10px] text-sidebar-foreground/50 truncate">{currentUser?.email || ""}</p>
               </div>
             </div>
             <button
-              onClick={() => logout()}
+              onClick={async () => {
+                await logout();
+                window.location.href = '/login';
+              }}
               className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs text-sidebar-foreground/60 hover:text-red-400 hover:bg-red-500/10 transition-colors"
             >
               <LogOut size={14} />

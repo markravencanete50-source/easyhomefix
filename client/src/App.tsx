@@ -4,6 +4,7 @@ import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { AuthProvider } from "./contexts/AuthContext";
 import AppLayout from "./components/AppLayout";
 
 // Pages
@@ -18,38 +19,44 @@ import Notifications from "./pages/Notifications";
 import AdminUsers from "./pages/AdminUsers";
 import AdminAnalytics from "./pages/AdminAnalytics";
 import Home from "./pages/Home";
+import Login from "./pages/Login";
 
 function AppRoutes() {
   return (
-    <AppLayout>
-      <Switch>
-        <Route path="/" component={Home} />
-        <Route path="/dashboard" component={Dashboard} />
-        <Route path="/tickets" component={TicketList} />
-        <Route path="/tickets/new" component={SubmitTicket} />
-        <Route path="/tickets/:id" component={TicketDetail} />
-        <Route path="/jobs" component={JobList} />
-        <Route path="/properties" component={Properties} />
-        <Route path="/properties/:id" component={PropertyDetail} />
-        <Route path="/notifications" component={Notifications} />
-        <Route path="/admin/users" component={AdminUsers} />
-        <Route path="/admin/analytics" component={AdminAnalytics} />
-        <Route path="/404" component={NotFound} />
-        <Route component={NotFound} />
-      </Switch>
-    </AppLayout>
+    <Switch>
+      <Route path="/login" component={Login} />
+      <AppLayout>
+        <Switch>
+          <Route path="/" component={Home} />
+          <Route path="/dashboard" component={Dashboard} />
+          <Route path="/tickets" component={TicketList} />
+          <Route path="/tickets/new" component={SubmitTicket} />
+          <Route path="/tickets/:id" component={TicketDetail} />
+          <Route path="/jobs" component={JobList} />
+          <Route path="/properties" component={Properties} />
+          <Route path="/properties/:id" component={PropertyDetail} />
+          <Route path="/notifications" component={Notifications} />
+          <Route path="/admin/users" component={AdminUsers} />
+          <Route path="/admin/analytics" component={AdminAnalytics} />
+          <Route path="/404" component={NotFound} />
+          <Route component={NotFound} />
+        </Switch>
+      </AppLayout>
+    </Switch>
   );
 }
 
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider defaultTheme="light">
-        <TooltipProvider>
-          <Toaster />
-          <AppRoutes />
-        </TooltipProvider>
-      </ThemeProvider>
+      <AuthProvider>
+        <ThemeProvider defaultTheme="light">
+          <TooltipProvider>
+            <Toaster />
+            <AppRoutes />
+          </TooltipProvider>
+        </ThemeProvider>
+      </AuthProvider>
     </ErrorBoundary>
   );
 }

@@ -1,0 +1,109 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── Helper Functions ─────────────────────────────────────
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && getUserRole() == 'admin';
+    }
+
+    function isPropertyManager() {
+      return isAuthenticated() && (getUserRole() == 'property_manager' || getUserRole() == 'admin');
+    }
+
+    function isTenant() {
+      return isAuthenticated() && getUserRole() == 'tenant';
+    }
+
+    function isContractor() {
+      return isAuthenticated() && getUserRole() == 'contractor';
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // ─── Users Collection ─────────────────────────────────────
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (isOwner(userId) || isPropertyManager());
+      allow create: if isAuthenticated() && isOwner(userId);
+      allow update: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    // ─── Properties Collection ────────────────────────────────
+    match /properties/{propertyId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isPropertyManager();
+    }
+
+    // ─── Maintenance Tickets ──────────────────────────────────
+    match /tickets/{ticketId} {
+      // Tenants can read their own tickets; managers/contractors can read all
+      allow read: if isAuthenticated() && (
+        isPropertyManager() ||
+        isContractor() ||
+        (isTenant() && resource.data.tenantId == request.auth.uid)
+      );
+
+      // Tenants can create tickets
+      allow create: if isTenant() && request.resource.data.tenantId == request.auth.uid;
+
+      // Managers can update any ticket; contractors can update assigned tickets
+      allow update: if isAuthenticated() && (
+        isPropertyManager() ||
+        (isContractor() && resource.data.assignedContractorId == request.auth.uid)
+      );
+
+      allow delete: if isAdmin();
+
+      // ─── Ticket Messages ────────────────────────────────────
+      match /messages/{messageId} {
+        allow read: if isAuthenticated() && (
+          isPropertyManager() ||
+          isContractor() ||
+          (isTenant() && get(/databases/$(database)/documents/tickets/$(ticketId)).data.tenantId == request.auth.uid)
+        );
+        allow create: if isAuthenticated();
+        allow update, delete: if isAuthenticated() && isOwner(resource.data.senderId);
+      }
+
+      // ─── Ticket Attachments ─────────────────────────────────
+      match /attachments/{attachmentId} {
+        allow read: if isAuthenticated();
+        allow create: if isAuthenticated();
+        allow delete: if isPropertyManager();
+      }
+    }
+
+    // ─── Notifications ────────────────────────────────────────
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated() && isOwner(resource.data.userId);
+      allow create: if isPropertyManager();
+      allow update: if isAuthenticated() && isOwner(resource.data.userId);
+      allow delete: if isAuthenticated() && (isOwner(resource.data.userId) || isAdmin());
+    }
+
+    // ─── Activity Logs ────────────────────────────────────────
+    match /activityLogs/{logId} {
+      allow read: if isPropertyManager();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAdmin();
+    }
+
+    // ─── Contractors ──────────────────────────────────────────
+    match /contractors/{contractorId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isPropertyManager();
+      allow delete: if isAdmin();
+    }
+  }
+}

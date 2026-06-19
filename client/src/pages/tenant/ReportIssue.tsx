@@ -80,7 +80,7 @@ interface FormData {
 
 export default function ReportIssue() {
   const [, navigate] = useLocation();
-  const { user, isDemoMode } = useAuth();
+  const { currentUser: user, isDemoMode } = useAuth();
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -161,7 +161,7 @@ export default function ReportIssue() {
           title: form.title,
           description: form.description,
           priority: form.priority as Priority,
-          status: 'open',
+          status: 'submitted',
           attachments: uploadedUrls.map((url, i) => ({
             id: `att-${i}`,
             ticketId: tempTicketId,
@@ -170,7 +170,8 @@ export default function ReportIssue() {
             fileType: form.files[i]?.type ?? 'application/octet-stream',
             fileSize: form.files[i]?.size ?? 0,
             url,
-            uploadedAt: new Date().toISOString(),
+            attachmentType: 'evidence',
+            createdAt: new Date().toISOString(),
           })),
           issueDuration: form.issueDuration as MaintenanceTicket['issueDuration'],
           contractorAccess: form.contractorAccess as MaintenanceTicket['contractorAccess'],
@@ -178,7 +179,7 @@ export default function ReportIssue() {
           isEscalated: false,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
-        });
+        } as any);
 
         setTicketNumber(ticketNum);
         setSubmitted(true);
@@ -317,22 +318,25 @@ export default function ReportIssue() {
                   <p className="text-sm text-muted-foreground mt-0.5">What type of issue are you reporting?</p>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
-                  {CATEGORIES.map(cat => (
-                    <button
-                      key={cat}
-                      onClick={() => setForm(prev => ({ ...prev, category: cat }))}
-                      className={`flex items-center gap-2.5 p-3.5 rounded-lg border-2 text-left transition-all duration-150 ${
-                        form.category === cat
-                          ? 'border-primary bg-primary/5'
-                          : 'border-border hover:border-primary/50 hover:bg-muted/30'
-                      }`}
-                    >
-                      <span className="text-xl">{CATEGORY_ICONS[cat]}</span>
-                      <span className={`text-sm font-medium ${form.category === cat ? 'text-primary' : 'text-foreground'}`}>
-                        {CATEGORY_LABELS[cat]}
-                      </span>
-                    </button>
-                  ))}
+                  {CATEGORIES.map(cat => {
+                    const Icon = CATEGORY_ICONS[cat];
+                    return (
+                      <button
+                        key={cat}
+                        onClick={() => setForm(prev => ({ ...prev, category: cat }))}
+                        className={`flex items-center gap-2.5 p-3.5 rounded-lg border-2 text-left transition-all duration-150 ${
+                          form.category === cat
+                            ? 'border-primary bg-primary/5'
+                            : 'border-border hover:border-primary/50 hover:bg-muted/30'
+                        }`}
+                      >
+                        <span className="text-xl text-primary"><Icon className="w-5 h-5" /></span>
+                        <span className={`text-sm font-medium ${form.category === cat ? 'text-primary' : 'text-foreground'}`}>
+                          {CATEGORY_LABELS[cat]}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -353,31 +357,18 @@ export default function ReportIssue() {
                       placeholder="e.g. Kitchen sink leaking under cabinet"
                       value={form.title}
                       onChange={e => setForm(prev => ({ ...prev, title: e.target.value }))}
-                      maxLength={100}
+                      className="h-10"
                     />
-                    <p className="text-xs text-muted-foreground text-right">{form.title.length}/100</p>
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="description">Detailed Description <span className="text-destructive">*</span></Label>
+                    <Label htmlFor="description">Full Description <span className="text-destructive">*</span></Label>
                     <Textarea
                       id="description"
-                      placeholder="Describe the issue in detail. When did it start? What have you noticed? Any safety concerns?"
+                      placeholder="Please provide as much detail as possible about the issue..."
                       value={form.description}
                       onChange={e => setForm(prev => ({ ...prev, description: e.target.value }))}
-                      rows={5}
-                      maxLength={1000}
+                      className="min-h-[120px] resize-none"
                     />
-                    <p className="text-xs text-muted-foreground text-right">{form.description.length}/1000</p>
-                  </div>
-                  <div className="p-3 rounded-lg bg-muted/40 border border-border flex items-center gap-2">
-                    <Mic className="w-4 h-4 text-muted-foreground shrink-0" />
-                    <div className="flex-1">
-                      <p className="text-xs font-medium text-foreground">Voice Recording</p>
-                      <p className="text-xs text-muted-foreground">Voice message upload available in full app</p>
-                    </div>
-                    <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => toast.info('Voice recording requires microphone access in the full app.')}>
-                      Record
-                    </Button>
                   </div>
                 </div>
               </div>
@@ -387,44 +378,42 @@ export default function ReportIssue() {
               <div className="space-y-4">
                 <div>
                   <h3 className="text-lg font-bold text-foreground" style={{ fontFamily: 'DM Sans, sans-serif' }}>
-                    Upload Evidence
+                    Evidence (Optional)
                   </h3>
-                  <p className="text-sm text-muted-foreground mt-0.5">
-                    Photos and videos help us understand the issue faster. (Optional)
-                  </p>
+                  <p className="text-sm text-muted-foreground mt-0.5">Upload photos or videos to help us understand the issue.</p>
                 </div>
-                <div
-                  className="border-2 border-dashed border-border rounded-xl p-8 text-center cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-all duration-150"
+                
+                <div 
                   onClick={() => fileInputRef.current?.click()}
+                  className="border-2 border-dashed border-border rounded-xl p-8 flex flex-col items-center justify-center gap-3 hover:bg-muted/50 hover:border-primary/50 cursor-pointer transition-all"
                 >
-                  <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                  <p className="text-sm font-medium text-foreground">Drop files here or click to upload</p>
-                  <p className="text-xs text-muted-foreground mt-1">JPG, PNG, WebP, MP4, MOV, WebM — Max 100MB each</p>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    multiple
+                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Upload className="w-6 h-6 text-primary" />
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm font-medium">Click to upload or drag and drop</p>
+                    <p className="text-xs text-muted-foreground mt-1">PNG, JPG or MP4 (max. 100MB)</p>
+                  </div>
+                  <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    onChange={handleFileAdd} 
+                    multiple 
+                    className="hidden" 
                     accept="image/*,video/*"
-                    className="hidden"
-                    onChange={handleFileAdd}
                   />
                 </div>
+
                 {form.files.length > 0 && (
-                  <div className="space-y-2">
-                    <p className="text-xs font-medium text-muted-foreground">{form.files.length} file(s) selected</p>
+                  <div className="grid grid-cols-2 gap-2 mt-4">
                     {form.files.map((file, i) => (
-                      <div key={i} className="flex items-center gap-3 p-2.5 rounded-lg bg-muted/40 border border-border">
-                        {file.type.startsWith('image/') ? (
-                          <Image className="w-4 h-4 text-blue-500 shrink-0" />
-                        ) : (
-                          <Video className="w-4 h-4 text-purple-500 shrink-0" />
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium text-foreground truncate">{file.name}</p>
-                          <p className="text-xs text-muted-foreground">{formatFileSize(file.size)}</p>
+                      <div key={i} className="flex items-center justify-between p-2 rounded-lg bg-muted/50 border border-border">
+                        <div className="flex items-center gap-2 overflow-hidden">
+                          {file.type.startsWith('image/') ? <Image className="w-4 h-4 shrink-0" /> : <Video className="w-4 h-4 shrink-0" />}
+                          <span className="text-xs truncate font-medium">{file.name}</span>
                         </div>
-                        <button onClick={() => removeFile(i)} className="text-muted-foreground hover:text-destructive transition-colors">
-                          <X className="w-4 h-4" />
+                        <button onClick={() => removeFile(i)} className="p-1 hover:bg-destructive/10 hover:text-destructive rounded-md transition-colors">
+                          <X className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     ))}
@@ -437,74 +426,80 @@ export default function ReportIssue() {
               <div className="space-y-5">
                 <div>
                   <h3 className="text-lg font-bold text-foreground" style={{ fontFamily: 'DM Sans, sans-serif' }}>
-                    Additional Information
+                    Final Details
                   </h3>
-                  <p className="text-sm text-muted-foreground mt-0.5">Help us prioritize and schedule your request.</p>
+                  <p className="text-sm text-muted-foreground mt-0.5">Help us prioritize and schedule the repair.</p>
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-sm font-semibold">How long has this issue existed?</Label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {[
-                      { value: 'today', label: 'Today' },
-                      { value: '1_3_days', label: '1–3 Days' },
-                      { value: '1_week', label: '1 Week' },
-                      { value: 'more_than_1_week', label: 'More Than 1 Week' },
-                    ].map(opt => (
-                      <button
-                        key={opt.value}
-                        onClick={() => setForm(prev => ({ ...prev, issueDuration: opt.value as FormData['issueDuration'] }))}
-                        className={`p-3 rounded-lg border-2 text-sm font-medium transition-all duration-150 ${
-                          form.issueDuration === opt.value
-                            ? 'border-primary bg-primary/5 text-primary'
-                            : 'border-border hover:border-primary/50 text-foreground'
-                        }`}
-                      >
-                        {opt.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-sm font-semibold">Can a contractor access the property?</Label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {[
-                      { value: 'yes', label: 'Yes' },
-                      { value: 'no', label: 'No' },
-                      { value: 'contact_first', label: 'Contact Me First' },
-                    ].map(opt => (
-                      <button
-                        key={opt.value}
-                        onClick={() => setForm(prev => ({ ...prev, contractorAccess: opt.value as FormData['contractorAccess'] }))}
-                        className={`p-3 rounded-lg border-2 text-sm font-medium transition-all duration-150 ${
-                          form.contractorAccess === opt.value
-                            ? 'border-primary bg-primary/5 text-primary'
-                            : 'border-border hover:border-primary/50 text-foreground'
-                        }`}
-                      >
-                        {opt.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-sm font-semibold">Priority Level</Label>
+
+                <div className="space-y-4">
                   <div className="space-y-2">
-                    {PRIORITIES.map(p => (
-                      <button
-                        key={p.value}
-                        onClick={() => setForm(prev => ({ ...prev, priority: p.value }))}
-                        className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 text-left transition-all duration-150 ${
-                          form.priority === p.value ? `border-current ${p.color}` : 'border-border hover:border-primary/50'
-                        }`}
-                      >
-                        {p.value === 'emergency' && <AlertTriangle className="w-4 h-4 shrink-0" />}
-                        <div>
-                          <p className="text-sm font-semibold">{p.label}</p>
-                          <p className="text-xs opacity-70">{p.desc}</p>
-                        </div>
-                        {form.priority === p.value && <CheckCircle className="w-4 h-4 ml-auto shrink-0" />}
-                      </button>
-                    ))}
+                    <Label className="text-sm font-medium">How long has this been an issue? *</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { value: 'today', label: 'Started today' },
+                        { value: '1_3_days', label: '1-3 days' },
+                        { value: '1_week', label: 'About a week' },
+                        { value: 'more_than_1_week', label: 'Over a week' },
+                      ].map(opt => (
+                        <button
+                          key={opt.value}
+                          onClick={() => setForm(prev => ({ ...prev, issueDuration: opt.value as any }))}
+                          className={`p-2.5 rounded-lg border text-sm transition-all ${
+                            form.issueDuration === opt.value 
+                              ? 'border-primary bg-primary/5 text-primary font-medium' 
+                              : 'border-border hover:bg-muted/50'
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Can a contractor access with a key? *</Label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { value: 'yes', label: 'Yes' },
+                        { value: 'no', label: 'No' },
+                        { value: 'contact_first', label: 'Call first' },
+                      ].map(opt => (
+                        <button
+                          key={opt.value}
+                          onClick={() => setForm(prev => ({ ...prev, contractorAccess: opt.value as any }))}
+                          className={`p-2.5 rounded-lg border text-sm transition-all ${
+                            form.contractorAccess === opt.value 
+                              ? 'border-primary bg-primary/5 text-primary font-medium' 
+                              : 'border-border hover:bg-muted/50'
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Priority Level *</Label>
+                    <div className="grid grid-cols-1 gap-2">
+                      {PRIORITIES.map(p => (
+                        <button
+                          key={p.value}
+                          onClick={() => setForm(prev => ({ ...prev, priority: p.value }))}
+                          className={`flex items-center justify-between p-3 rounded-xl border-2 transition-all ${
+                            form.priority === p.value 
+                              ? p.color 
+                              : 'border-border hover:bg-muted/50'
+                          }`}
+                        >
+                          <div className="text-left">
+                            <p className="font-bold text-sm">{p.label}</p>
+                            <p className="text-xs opacity-80">{p.desc}</p>
+                          </div>
+                          {form.priority === p.value && <CheckCircle className="w-5 h-5" />}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -514,69 +509,75 @@ export default function ReportIssue() {
               <div className="space-y-4">
                 <div>
                   <h3 className="text-lg font-bold text-foreground" style={{ fontFamily: 'DM Sans, sans-serif' }}>
-                    Review Your Request
+                    Review & Submit
                   </h3>
-                  <p className="text-sm text-muted-foreground mt-0.5">Confirm the details before submitting.</p>
+                  <p className="text-sm text-muted-foreground mt-0.5">Please check your details before submitting.</p>
                 </div>
+
                 <div className="space-y-3">
-                  {[
-                    { label: 'Postcode', value: form.postcode },
-                    { label: 'Address', value: form.addressLine1 },
-                    { label: 'Category', value: form.category ? CATEGORY_LABELS[form.category] : '' },
-                    { label: 'Title', value: form.title },
-                    { label: 'Priority', value: form.priority ? form.priority.charAt(0).toUpperCase() + form.priority.slice(1) : '' },
-                    { label: 'Issue Duration', value: { today: 'Today', '1_3_days': '1–3 Days', '1_week': '1 Week', 'more_than_1_week': 'More Than 1 Week' }[form.issueDuration as string] },
-                    { label: 'Contractor Access', value: { yes: 'Yes', no: 'No', contact_first: 'Contact Me First' }[form.contractorAccess as string] },
-                    { label: 'Files', value: form.files.length > 0 ? `${form.files.length} file(s) attached` : 'None' },
-                  ].map(({ label, value }) => (
-                    <div key={label} className="flex items-start justify-between gap-4 py-2 border-b border-border last:border-0">
-                      <span className="text-sm text-muted-foreground shrink-0">{label}</span>
-                      <span className="text-sm font-medium text-foreground text-right">{value || '—'}</span>
+                  <div className="p-4 rounded-xl bg-muted/30 border border-border space-y-3">
+                    <div className="flex justify-between items-start border-b border-border/50 pb-2">
+                      <div>
+                        <p className="text-xs text-muted-foreground uppercase font-semibold tracking-wider">Property</p>
+                        <p className="text-sm font-medium">{form.addressLine1}, {form.postcode}</p>
+                      </div>
+                      <Badge variant="outline" className="bg-background">{form.category ? CATEGORY_LABELS[form.category as MaintenanceCategory] : ''}</Badge>
                     </div>
-                  ))}
-                </div>
-                <div className="p-3 rounded-lg bg-muted/40 border border-border">
-                  <p className="text-xs font-medium text-foreground mb-1">Description</p>
-                  <p className="text-sm text-muted-foreground">{form.description}</p>
-                </div>
-                {form.priority === 'emergency' && (
-                  <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 border border-red-200">
-                    <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
-                    <p className="text-xs text-red-700 font-medium">
-                      Emergency requests are escalated immediately and may incur additional charges.
+                    <div>
+                      <p className="text-xs text-muted-foreground uppercase font-semibold tracking-wider">Issue</p>
+                      <p className="text-sm font-bold mt-0.5">{form.title}</p>
+                      <p className="text-sm text-muted-foreground mt-1 line-clamp-3">{form.description}</p>
+                    </div>
+                    <div className="flex gap-4 pt-1">
+                      <div>
+                        <p className="text-xs text-muted-foreground uppercase font-semibold tracking-wider">Priority</p>
+                        <p className="text-sm font-medium capitalize">{form.priority}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground uppercase font-semibold tracking-wider">Evidence</p>
+                        <p className="text-sm font-medium">{form.files.length} file(s)</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex gap-3">
+                    <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
+                    <p className="text-xs text-amber-800">
+                      By submitting this request, you agree to allow the property manager and assigned contractors to contact you regarding this maintenance issue.
                     </p>
                   </div>
-                )}
+                </div>
               </div>
             )}
 
           </CardContent>
         </Card>
 
-        <div className="flex items-center justify-between mt-4">
+        <div className="flex items-center justify-between mt-6">
           <Button
-            variant="outline"
-            onClick={() => step > 1 ? setStep(s => s - 1) : navigate('/')}
+            variant="ghost"
+            onClick={() => setStep(s => s - 1)}
+            disabled={step === 1 || submitting}
             className="gap-1.5"
           >
             <ChevronLeft className="w-4 h-4" />
-            {step === 1 ? 'Cancel' : 'Back'}
+            Back
           </Button>
-
-          {step < 6 ? (
+          
+          {step < STEPS.length ? (
             <Button
               onClick={() => setStep(s => s + 1)}
               disabled={!canProceed()}
               className="gap-1.5"
             >
-              Continue
+              Next Step
               <ChevronRight className="w-4 h-4" />
             </Button>
           ) : (
             <Button
               onClick={handleSubmit}
               disabled={submitting}
-              className="gap-1.5 bg-primary"
+              className="gap-1.5 bg-primary hover:bg-primary/90 min-w-[120px]"
             >
               {submitting ? (
                 <>
@@ -585,8 +586,8 @@ export default function ReportIssue() {
                 </>
               ) : (
                 <>
-                  <Send className="w-4 h-4" />
                   Submit Request
+                  <Send className="w-4 h-4" />
                 </>
               )}
             </Button>

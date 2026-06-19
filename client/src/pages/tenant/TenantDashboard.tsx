@@ -3,7 +3,6 @@
 // Simple, lightweight view for tenants
 // ============================================================
 
-import { useState } from 'react';
 import { Link } from 'wouter';
 import DashboardLayout from '@/components/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,8 +13,6 @@ import { MOCK_TICKETS, MOCK_NOTIFICATIONS, MOCK_PROPERTIES } from '@/lib/mockDat
 import {
   STATUS_LABELS,
   STATUS_COLORS,
-  PRIORITY_BADGE_COLORS,
-  PRIORITY_LABELS,
   CATEGORY_LABELS,
   formatDate,
   timeAgo,
@@ -30,7 +27,6 @@ import {
   Calendar,
   ArrowRight,
   AlertTriangle,
-  Loader2,
 } from 'lucide-react';
 
 export default function TenantDashboard() {

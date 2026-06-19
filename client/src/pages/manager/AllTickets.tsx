@@ -23,9 +23,8 @@ import {
 } from '@/lib/utils';
 import type { MaintenanceTicket, TicketStatus } from '@/types';
 import {
-  Search, Filter, AlertTriangle, Calendar, User, ChevronRight,
-  UserCheck, Clock, CheckCircle, X, Eye, ArrowUpCircle,
-  RefreshCw, Download,
+  Search, Filter, AlertTriangle, Calendar, UserCheck, ChevronRight,
+  Eye, ArrowUpCircle, X, Download,
 } from 'lucide-react';
 
 export default function AllTickets() {
@@ -198,7 +197,7 @@ export default function AllTickets() {
                       {ticket.unitNumber && <p className="text-xs text-muted-foreground">Unit {ticket.unitNumber}</p>}
                     </td>
                     <td className="px-4 py-3">
-                      <span className="text-lg">{CATEGORY_ICONS[ticket.category]}</span>
+                      <span className="text-lg">{CATEGORY_ICONS[ticket.category] && <span className="w-5 h-5">{(() => { const Icon = CATEGORY_ICONS[ticket.category]; return <Icon className="w-4 h-4" />; })()}</span>}</span>
                       <p className="text-xs text-muted-foreground mt-0.5">{CATEGORY_LABELS[ticket.category]}</p>
                     </td>
                     <td className="px-4 py-3">
@@ -250,12 +249,12 @@ export default function AllTickets() {
                             <UserCheck className="w-3.5 h-3.5" />
                           </Button>
                         )}
-                        {NEXT_STATUS[ticket.status] && (
+                        {NEXT_STATUS[ticket.status] && NEXT_STATUS[ticket.status].length > 0 && (
                           <Button
                             variant="ghost"
                             size="sm"
                             className="h-7 px-2 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                            onClick={() => handleStatusUpdate(ticket, NEXT_STATUS[ticket.status]!)}
+                            onClick={() => handleStatusUpdate(ticket, NEXT_STATUS[ticket.status][0])}
                           >
                             <ChevronRight className="w-3.5 h-3.5" />
                           </Button>
@@ -308,138 +307,62 @@ export default function AllTickets() {
                   <p className="text-xs text-muted-foreground">Property</p>
                   <p className="font-medium">{selectedTicket.propertyName}</p>
                 </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Category</p>
-                  <p className="font-medium">{CATEGORY_LABELS[selectedTicket.category]}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Priority</p>
-                  <span className={`priority-chip ${PRIORITY_BADGE_COLORS[selectedTicket.priority]}`}>
-                    {PRIORITY_LABELS[selectedTicket.priority]}
-                  </span>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Status</p>
-                  <span className={`status-badge ${STATUS_COLORS[selectedTicket.status]}`}>
-                    {STATUS_LABELS[selectedTicket.status]}
-                  </span>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Contractor Access</p>
-                  <p className="font-medium capitalize">{selectedTicket.contractorAccess.replace('_', ' ')}</p>
-                </div>
               </div>
-              <div>
-                <p className="text-xs text-muted-foreground mb-1">Description</p>
-                <p className="text-sm bg-muted/40 rounded-lg p-3">{selectedTicket.description}</p>
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground">Description</p>
+                <p className="text-sm">{selectedTicket.description}</p>
               </div>
-              {selectedTicket.assignedContractorName && (
-                <div className="flex items-center gap-2 p-3 rounded-lg bg-teal-50 border border-teal-100">
-                  <UserCheck className="w-4 h-4 text-teal-600" />
-                  <div>
-                    <p className="text-xs font-medium text-teal-700">Assigned to {selectedTicket.assignedContractorName}</p>
-                    {selectedTicket.scheduledDate && (
-                      <p className="text-xs text-teal-600">Scheduled: {formatDate(selectedTicket.scheduledDate)}</p>
-                    )}
-                  </div>
+              {NEXT_STATUS[selectedTicket.status] && NEXT_STATUS[selectedTicket.status].length > 0 && (
+                <div className="pt-2 border-t flex gap-2">
+                  {NEXT_STATUS[selectedTicket.status].map(status => (
+                    <Button 
+                      key={status} 
+                      size="sm" 
+                      onClick={() => { handleStatusUpdate(selectedTicket, status); setSelectedTicket(null); }}
+                    >
+                      Move to {STATUS_LABELS[status]}
+                    </Button>
+                  ))}
                 </div>
               )}
             </div>
-            <DialogFooter className="gap-2">
-              {!selectedTicket.assignedContractorId && (
-                <Button
-                  size="sm"
-                  onClick={() => {
-                    setAssigningTicket(selectedTicket);
-                    setSelectedTicket(null);
-                    setAssignDialogOpen(true);
-                  }}
-                >
-                  <UserCheck className="w-4 h-4 mr-1.5" />
-                  Assign Contractor
-                </Button>
-              )}
-              {NEXT_STATUS[selectedTicket.status] && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    handleStatusUpdate(selectedTicket, NEXT_STATUS[selectedTicket.status]!);
-                    setSelectedTicket(null);
-                  }}
-                >
-                  Move to {STATUS_LABELS[NEXT_STATUS[selectedTicket.status]!]}
-                </Button>
-              )}
-            </DialogFooter>
           </DialogContent>
         </Dialog>
       )}
 
-      {/* Assign Contractor Dialog */}
+      {/* Assign Dialog */}
       <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>Assign Contractor</DialogTitle>
-            <DialogDescription>
-              Assign a contractor to ticket {assigningTicket?.ticketNumber}
-            </DialogDescription>
+            <DialogDescription>Select a contractor and schedule a visit for ticket {assigningTicket?.ticketNumber}.</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-4 py-2">
             <div className="space-y-2">
-              <Label>Select Contractor</Label>
-              <div className="space-y-2 max-h-48 overflow-y-auto">
-                {MOCK_CONTRACTORS.map(contractor => (
-                  <button
-                    key={contractor.id}
-                    onClick={() => setSelectedContractor(contractor.id)}
-                    className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 text-left transition-all ${
-                      selectedContractor === contractor.id
-                        ? 'border-primary bg-primary/5'
-                        : 'border-border hover:border-primary/50'
-                    }`}
-                  >
-                    <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-xs font-bold text-amber-700 shrink-0">
-                      {contractor.displayName.split(' ').map(n => n[0]).join('')}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground">{contractor.companyName}</p>
-                      <p className="text-xs text-muted-foreground">{contractor.tradeTypes.join(', ')}</p>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <div className={`w-2 h-2 rounded-full ${contractor.isAvailable ? 'bg-green-500' : 'bg-gray-300'}`} />
-                      <span className="text-xs text-muted-foreground">{contractor.performanceRating}★</span>
-                    </div>
-                  </button>
-                ))}
-              </div>
+              <Label>Contractor</Label>
+              <Select value={selectedContractor} onValueChange={setSelectedContractor}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select contractor" />
+                </SelectTrigger>
+                <SelectContent>
+                  {MOCK_CONTRACTORS.map(c => (
+                    <SelectItem key={c.id} value={c.id}>{c.displayName} ({c.companyName})</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="schedDate">Scheduled Date (optional)</Label>
-              <Input
-                id="schedDate"
-                type="date"
-                value={scheduledDate}
-                onChange={e => setScheduledDate(e.target.value)}
-              />
+            <div className="space-y-2">
+              <Label>Scheduled Date</Label>
+              <Input type="date" value={scheduledDate} onChange={e => setScheduledDate(e.target.value)} />
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="notes">Notes for Contractor (optional)</Label>
-              <Textarea
-                id="notes"
-                placeholder="Any special instructions..."
-                value={managerNotes}
-                onChange={e => setManagerNotes(e.target.value)}
-                rows={3}
-              />
+            <div className="space-y-2">
+              <Label>Manager Notes</Label>
+              <Textarea placeholder="Add notes for the contractor..." value={managerNotes} onChange={e => setManagerNotes(e.target.value)} />
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setAssignDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleAssign} disabled={!selectedContractor}>
-              <UserCheck className="w-4 h-4 mr-1.5" />
-              Assign
-            </Button>
+            <Button onClick={handleAssign}>Assign Contractor</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

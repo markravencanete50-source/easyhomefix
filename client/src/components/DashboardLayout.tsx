@@ -39,8 +39,14 @@ const MAX_WIDTH = 480;
 
 export default function DashboardLayout({
   children,
+  title,
+  breadcrumbs,
+  actions,
 }: {
   children: React.ReactNode;
+  title?: string;
+  breadcrumbs?: { label: string; href?: string }[];
+  actions?: React.ReactNode;
 }) {
   const [sidebarWidth, setSidebarWidth] = useState(() => {
     const saved = localStorage.getItem(SIDEBAR_WIDTH_KEY);
@@ -90,7 +96,12 @@ export default function DashboardLayout({
         } as CSSProperties
       }
     >
-      <DashboardLayoutContent setSidebarWidth={setSidebarWidth}>
+      <DashboardLayoutContent 
+        setSidebarWidth={setSidebarWidth}
+        title={title}
+        breadcrumbs={breadcrumbs}
+        actions={actions}
+      >
         {children}
       </DashboardLayoutContent>
     </SidebarProvider>
@@ -105,7 +116,14 @@ type DashboardLayoutContentProps = {
 function DashboardLayoutContent({
   children,
   setSidebarWidth,
-}: DashboardLayoutContentProps) {
+  title,
+  breadcrumbs,
+  actions,
+}: DashboardLayoutContentProps & {
+  title?: string;
+  breadcrumbs?: { label: string; href?: string }[];
+  actions?: React.ReactNode;
+}) {
   const { user, logout } = useAuth();
   const [location, setLocation] = useLocation();
   const { state, toggleSidebar } = useSidebar();
@@ -257,7 +275,37 @@ function DashboardLayoutContent({
             </div>
           </div>
         )}
-        <main className="flex-1 p-4">{children}</main>
+        <main className="flex-1 p-4">
+          {(title || breadcrumbs || actions) && (
+            <div className="flex flex-col gap-4 mb-6">
+              <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-1">
+                  {breadcrumbs && (
+                    <nav className="flex items-center gap-1 text-xs text-muted-foreground">
+                      {breadcrumbs.map((crumb, i) => (
+                        <div key={i} className="flex items-center gap-1">
+                          {i > 0 && <span>/</span>}
+                          {crumb.href ? (
+                            <a href={crumb.href} className="hover:text-foreground">
+                              {crumb.label}
+                            </a>
+                          ) : (
+                            <span>{crumb.label}</span>
+                          )}
+                        </div>
+                      ))}
+                    </nav>
+                  )}
+                  {title && (
+                    <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+                  )}
+                </div>
+                {actions && <div className="flex items-center gap-2">{actions}</div>}
+              </div>
+            </div>
+          )}
+          {children}
+        </main>
       </SidebarInset>
     </>
   );

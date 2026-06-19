@@ -1,5 +1,5 @@
 import { useAuth } from "@/_core/hooks/useAuth";
-import { createTicket, uploadTicketAttachment } from "@/lib/firestore";
+import { createTicket } from "@/lib/firestore";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -25,7 +25,7 @@ import { useState, useRef } from "react";
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import type { TicketCategory, TicketPriority } from "../../../shared/types";
- 
+
 const CATEGORIES: { value: TicketCategory; label: string; icon: React.ReactNode; description: string }[] = [
   { value: "plumbing", label: "Plumbing", icon: <Droplets size={22} />, description: "Leaks, blockages, water issues" },
   { value: "electrical", label: "Electrical", icon: <Zap size={22} />, description: "Wiring, outlets, lighting" },
@@ -37,16 +37,16 @@ const CATEGORIES: { value: TicketCategory; label: string; icon: React.ReactNode;
   { value: "security", label: "Security", icon: <Shield size={22} />, description: "Locks, doors, access" },
   { value: "other", label: "Other", icon: <Flame size={22} />, description: "Other issues" },
 ];
- 
+
 const PRIORITIES: { value: TicketPriority; label: string; description: string; color: string; border: string }[] = [
   { value: "emergency", label: "Emergency", description: "Immediate danger — gas leak, flooding, fire risk", color: "text-red-600", border: "border-red-300 bg-red-50 hover:border-red-400" },
   { value: "high", label: "High", description: "Significant impact — no hot water, heating failure", color: "text-orange-600", border: "border-orange-300 bg-orange-50 hover:border-orange-400" },
   { value: "medium", label: "Medium", description: "Moderate issue — minor leak, broken appliance", color: "text-teal-600", border: "border-teal-300 bg-teal-50 hover:border-teal-400" },
   { value: "low", label: "Low", description: "Minor issue — cosmetic, non-urgent", color: "text-gray-600", border: "border-gray-200 bg-gray-50 hover:border-gray-300" },
 ];
- 
+
 const STEPS = ["Category", "Details", "Priority", "Photos", "Review"];
- 
+
 export default function SubmitTicket() {
   const { user } = useAuth();
   const [, navigate] = useLocation();
@@ -58,7 +58,7 @@ export default function SubmitTicket() {
   const [photos, setPhotos] = useState<{ file: File; preview: string }[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
- 
+
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     const newPhotos = files.slice(0, 4 - photos.length).map(file => ({
@@ -67,14 +67,14 @@ export default function SubmitTicket() {
     }));
     setPhotos(prev => [...prev, ...newPhotos]);
   };
- 
+
   const removePhoto = (index: number) => {
     setPhotos(prev => {
       URL.revokeObjectURL(prev[index].preview);
       return prev.filter((_, i) => i !== index);
     });
   };
- 
+
   const handleSubmit = async () => {
     if (!category || !user) return;
     setSubmitting(true);
@@ -88,13 +88,7 @@ export default function SubmitTicket() {
         tenantName: user.displayName ?? user.email ?? "Tenant",
         status: "open",
       });
- 
-      if (photos.length > 0) {
-        for (const photo of photos) {
-          await uploadTicketAttachment(ticketId, photo.file);
-        }
-      }
- 
+
       toast.success("Request submitted successfully!");
       navigate(`/tickets/${ticketId}`);
     } catch (err) {
@@ -104,13 +98,13 @@ export default function SubmitTicket() {
       setSubmitting(false);
     }
   };
- 
+
   const canNext = () => {
     if (step === 0) return category !== null;
     if (step === 1) return title.trim().length >= 3 && description.trim().length >= 10;
     return true;
   };
- 
+
   return (
     <div className="p-6 max-w-2xl mx-auto space-y-6 animate-slide-up">
       {/* Header */}
@@ -123,7 +117,7 @@ export default function SubmitTicket() {
           <p className="text-sm text-muted-foreground">Step {step + 1} of {STEPS.length}</p>
         </div>
       </div>
- 
+
       {/* Step indicator */}
       <div className="flex items-center gap-0">
         {STEPS.map((s, i) => (
@@ -145,7 +139,7 @@ export default function SubmitTicket() {
           </div>
         ))}
       </div>
- 
+
       {/* Step content */}
       <Card className="border-border shadow-sm">
         <CardContent className="p-6">
@@ -175,7 +169,7 @@ export default function SubmitTicket() {
               </div>
             </div>
           )}
- 
+
           {/* Step 1: Details */}
           {step === 1 && (
             <div className="space-y-4">
@@ -202,7 +196,7 @@ export default function SubmitTicket() {
               </div>
             </div>
           )}
- 
+
           {/* Step 2: Priority */}
           {step === 2 && (
             <div className="space-y-4">
@@ -229,7 +223,7 @@ export default function SubmitTicket() {
               </div>
             </div>
           )}
- 
+
           {/* Step 3: Photos */}
           {step === 3 && (
             <div className="space-y-4">
@@ -262,7 +256,7 @@ export default function SubmitTicket() {
               <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handlePhotoSelect} />
             </div>
           )}
- 
+
           {/* Step 4: Review */}
           {step === 4 && (
             <div className="space-y-4">
@@ -288,7 +282,7 @@ export default function SubmitTicket() {
           )}
         </CardContent>
       </Card>
- 
+
       {/* Navigation */}
       <div className="flex items-center justify-between">
         <Button
